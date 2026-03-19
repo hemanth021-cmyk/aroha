@@ -4,6 +4,6 @@ import tailwindcss from '@tailwindcss/vite'
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: '/aroha-3d/', // Exact repo name for GitHub Pages asset paths
+  base: '/aroha/', // Updated for the renamed 'aroha' repository on GitHub Pages
   plugins: [react(), tailwindcss()],
 })

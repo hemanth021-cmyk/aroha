@@ -1,11 +1,11 @@
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../App'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   Calendar, Flame, Zap, LogOut, ChevronLeft, ChevronRight, Menu,
   CheckCircle2, Circle, BookOpen, Target, TrendingUp, ArrowRight, Users,
-  User, Trophy, Bookmark, LayoutDashboard
+  User, Trophy, Bookmark, LayoutDashboard, Bot
 } from 'lucide-react'
 import { getTier, getNextTier, getMockLeaderboard } from '../data/tierSystem'
 import AnalyticsChart from '../components/AnalyticsChart'
@@ -15,6 +15,7 @@ import Universe from '../components/Universe'
 import Preloader from '../components/Preloader'
 import Starmap from '../components/Starmap'
 import CalendarView from '../components/CalendarView'
+import PlanetBotHUD from '../components/PlanetBotHUD'
 
 // ═══════════ MOCK DATA GENERATOR ═══════════
 
@@ -156,6 +157,8 @@ export default function DashboardPage() {
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0])
   const [calendarMonth, setCalendarMonth] = useState(new Date())
   const [activeTab, setActiveTab] = useState<'study' | 'constellation' | 'calendar' | 'leaderboard'>('study')
+  const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [isBotOpen, setIsBotOpen] = useState(false)
 
   const schedule = useMemo(() => {
     if (!user?.examDate || !user?.selectedTrack) return []
@@ -182,8 +185,25 @@ export default function DashboardPage() {
     return getMockLeaderboard(user?.name || 'You', userXP, user?.selectedTrack || 'Engineering')
   }, [user?.name, userXP, user?.selectedTrack])
 
-
-
+  // Starmap topics
+  const allTopics = useMemo(() => {
+    const subjects = getSubjectsForTrack(user?.selectedTrack || 'engineering', user?.selectedBranch);
+    const completedSet = new Set(schedule.filter(s => s.completed).map(s => s.topic));
+    const topics: any[] = [];
+    let counter = 0;
+    subjects.forEach(subject => {
+      const subjTopics = topicsBySubject[subject] || [`${subject} — Topic 1`];
+      subjTopics.forEach(topic => {
+        topics.push({
+          id: `starmap-node-${counter++}`,
+          subject,
+          topic,
+          completed: completedSet.has(topic)
+        });
+      });
+    });
+    return topics;
+  }, [user?.selectedTrack, user?.selectedBranch, schedule]);
 
 
   // Calendar helpers
@@ -214,8 +234,6 @@ export default function DashboardPage() {
     if (s < 30) return `🔥 ${s}-day warrior — unstoppable!`
     return `💎 ${s}-day legend — absolutely incredible!`
   }
-
-  const [sidebarOpen, setSidebarOpen] = useState(true)
 
 
 
@@ -295,174 +313,206 @@ export default function DashboardPage() {
           </div>
         </header>
 
-        <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6">
+        <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 border-b border-[var(--color-border2)]/10">
           <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6 text-center">
             <p className="text-sm text-[var(--color-muted)]">{streakMotivation()}</p>
           </motion.div>
 
-          <div className="flex gap-1 mb-6 p-1 rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] w-fit mx-auto">
-            <button onClick={() => setActiveTab('study')} className={`px-5 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${activeTab === 'study' ? 'gradient-accent text-[var(--color-bg)]' : 'text-[var(--color-muted)] hover:text-[var(--color-text)]'}`}>
-              <BookOpen size={16} /> Study
-            </button>
-            <button onClick={() => setActiveTab('constellation')} className={`px-5 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${activeTab === 'constellation' ? 'gradient-accent text-[var(--color-bg)]' : 'text-[var(--color-muted)] hover:text-[var(--color-text)]'}`}>
-              <Zap size={16} /> Constellation
-            </button>
-            <button onClick={() => setActiveTab('calendar')} className={`px-5 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${activeTab === 'calendar' ? 'gradient-accent text-[var(--color-bg)]' : 'text-[var(--color-muted)] hover:text-[var(--color-text)]'}`}>
-              <Calendar size={16} /> Calendar
-            </button>
-            <button onClick={() => setActiveTab('leaderboard')} className={`px-5 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${activeTab === 'leaderboard' ? 'gradient-accent text-[var(--color-bg)]' : 'text-[var(--color-muted)] hover:text-[var(--color-text)]'}`}>
-              <Users size={16} /> Leaderboard
-            </button>
+          {/* Navigation Tabs */}
+          <div className="flex gap-1 mb-6 p-1 rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] w-fit mx-auto shadow-[0_4px_20px_rgba(0,0,0,0.2)]">
+            {[
+              { id: 'study', label: 'Study', icon: <BookOpen size={16} /> },
+              { id: 'constellation', label: 'Constellation', icon: <Zap size={16} /> },
+              { id: 'calendar', label: 'Calendar', icon: <Calendar size={16} /> },
+              { id: 'leaderboard', label: 'Leaderboard', icon: <Trophy size={16} /> },
+            ].map(tab => (
+              <button 
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as any)} 
+                className={`px-5 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${activeTab === tab.id ? 'gradient-accent text-[var(--color-bg)] shadow-[0_4px_12px_rgba(232,184,75,0.2)]' : 'text-[var(--color-muted)] hover:text-[var(--color-text)]'}`}
+              >
+                {tab.icon} {tab.label}
+              </button>
+            ))}
           </div>
 
-          {activeTab === 'study' && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="relative h-[75vh] w-full mt-2 rounded-2xl overflow-hidden border border-[var(--color-border)] shadow-[0_0_40px_rgba(255,199,55,0.05)]">
-              {/* 3D WebGL Background Layer */}
-              <Universe />
+          {/* Tab Content */}
+          <AnimatePresence mode="wait">
+            {activeTab === 'study' && (
+              <motion.div 
+                key="study-tab"
+                initial={{ opacity: 0, scale: 0.98 }} 
+                animate={{ opacity: 1, scale: 1 }} 
+                exit={{ opacity: 0, scale: 0.98 }}
+                className="relative h-[75vh] w-full mt-2 rounded-3xl overflow-hidden border border-[var(--color-border)] shadow-[0_0_60px_rgba(0,0,0,0.5)] bg-black/40 backdrop-blur-sm"
+              >
+                {/* 3D WebGL Background Layer */}
+                <Universe 
+                  onPlanetClick={() => setIsBotOpen(!isBotOpen)} 
+                  isBotActive={isBotOpen} 
+                />
 
-              {/* 2D Glassmorphism Overlay (HUD) */}
-              <div className="absolute inset-0 z-10 pointer-events-none p-4 lg:p-8 flex flex-col justify-between">
-                
-                {/* Top Row: Mission Status */}
-                <div className="flex justify-between items-start">
-                  <div className="glass p-4 rounded-xl border-l-[3px] border-l-[var(--color-accent)] animate-fade-in-up">
-                     <h2 className="text-2xl font-[Orbitron] text-[var(--color-accent)] flex items-center gap-2">
-                       <Zap size={24} /> Knowledge Universe
-                     </h2>
-                     <p className="text-[var(--color-text)] opacity-80 mt-1 font-mono text-xs tracking-widest uppercase">
-                       Orbital Sync: {progressPercent}%
-                     </p>
-                  </div>
-
-                  {/* Right side stats */}
-                  <div className="flex gap-4 pointer-events-auto">
-                    <div className="glass p-3 lg:p-4 text-center rounded-xl min-w-[80px]">
-                      <Target size={20} className="mx-auto mb-1 text-[var(--color-accent)]" />
-                      <div className="text-xl font-bold text-[var(--color-accent)]">{daysRemaining}</div>
-                      <div className="text-[9px] text-[var(--color-muted)] uppercase tracking-widest mt-1">Days Left</div>
-                    </div>
-                    <div className="glass p-3 lg:p-4 text-center rounded-xl min-w-[80px]">
-                      <BookOpen size={20} className="mx-auto mb-1 text-[var(--color-blue)]" />
-                      <div className="text-xl font-bold text-[var(--color-blue)]">{completedCount}</div>
-                      <div className="text-[9px] text-[var(--color-muted)] uppercase tracking-widest mt-1">Modules</div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Bottom Row: Today's Quests Panel */}
-                <div className="self-end pointer-events-auto w-full max-w-md glass p-5 rounded-2xl animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
-                   <div className="flex items-center justify-between mb-4">
-                     <h3 className="text-sm tracking-widest font-[Orbitron] text-[var(--color-accent)] flex items-center gap-2">
-                       <Target size={16} /> Orbital Quests
-                     </h3>
-                     <span className="text-xs bg-[var(--color-surface2)] px-2 py-1 rounded text-[var(--color-muted)]">
-                       {todayTasks.length} Active
-                     </span>
-                   </div>
-                   
-                   <div className="space-y-3 max-h-[30vh] overflow-y-auto pr-2">
-                     {todayTasks.length === 0 ? (
-                        <div className="p-4 text-center text-xs text-[var(--color-muted)] border border-dashed border-[var(--color-border)] rounded-xl">No celestial events scheduled for today.</div>
-                     ) : (
-                        todayTasks.map((task, i) => (
-                          <div key={task.id} onClick={() => navigate(`/module?topic=${encodeURIComponent(task.topic)}&subject=${encodeURIComponent(task.subject)}`)} className="group flex items-center justify-between p-3 rounded-lg border border-[var(--color-border2)] bg-[var(--color-surface)]/50 hover:border-[var(--color-accent)] hover:bg-[var(--color-surface2)] transition-all cursor-pointer">
-                            <div className="flex flex-col">
-                              <span className="text-sm font-semibold text-[var(--color-text)] group-hover:text-[var(--color-accent)] transition-colors">{task.topic}</span>
-                              <span className="text-[10px] text-[var(--color-muted)] mt-1 font-mono">{task.subject} • {task.duration}m</span>
-                            </div>
-                            <div className="w-8 h-8 rounded-full border border-[var(--color-border)] flex items-center justify-center text-[var(--color-muted)] group-hover:text-[var(--color-accent)] transition-colors">
-                               <ArrowRight size={14} />
-                            </div>
-                          </div>
-                        ))
-                     )}
-                   </div>
-                </div>
-
-              </div>
-            </motion.div>
-          )}
-
-          {activeTab === 'constellation' && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="relative h-[80vh] w-full mt-2 rounded-2xl overflow-hidden border border-[var(--color-border)] shadow-[0_0_40px_rgba(176,122,245,0.05)]">
-              {/* 3D WebGL Starmap */}
-              <Starmap 
-                topics={(() => {
-                  const subjects = getSubjectsForTrack(user?.selectedTrack || 'engineering', user?.selectedBranch);
-                  const completedSet = new Set(schedule.filter(s => s.completed).map(s => s.topic));
-                  const allTopics: any[] = [];
-                  let counter = 0;
-                  subjects.forEach(subject => {
-                    const subjTopics = topicsBySubject[subject] || [`${subject} — Topic 1`];
-                    subjTopics.forEach(topic => {
-                      allTopics.push({
-                        id: `starmap-node-${counter++}`,
-                        subject,
-                        topic,
-                        completed: completedSet.has(topic)
-                      });
-                    });
-                  });
-                  return allTopics;
-                })()} 
-                onNodeClick={(subject, topic) => navigate(`/module?topic=${encodeURIComponent(topic)}&subject=${encodeURIComponent(subject)}`)} 
-              />
-              
-              {/* HUD Instructions */}
-              <div className="absolute inset-0 z-10 pointer-events-none p-4 lg:p-8 flex flex-col justify-end">
-                  <div className="glass p-4 rounded-xl text-center self-center animate-fade-in-up border border-[var(--color-border)] bg-[var(--color-bg)]/80 backdrop-blur-md">
-                     <p className="text-[var(--color-accent)] font-mono text-sm uppercase tracking-widest"><Target size={14} className="inline mr-2" /> Drag to explore • Click star to study</p>
-                  </div>
-              </div>
-            </motion.div>
-          )}
-
-          {activeTab === 'calendar' && (
-            <CalendarView 
-                schedule={schedule}
-                selectedDate={selectedDate}
-                setSelectedDate={setSelectedDate}
-                calendarMonth={calendarMonth}
-                setCalendarMonth={setCalendarMonth}
-                calendarDays={calendarDays}
-                getDateStr={getDateStr}
-            />
-          )}
-
-          {activeTab === 'leaderboard' && (
-            <div className="space-y-6">
-              <div className="surface-card p-6">
-                <h2 className="text-xl font-bold flex items-center gap-2 mb-6"><Trophy className="text-[var(--color-accent)]" /> Global Rankings</h2>
-                <div className="space-y-3">
-                  {leaderboard.map((lb, idx) => {
-                    const tier = getTier(lb.xp)
-                    const isUser = lb.id === 'current-user'
-                    return (
-                      <div key={lb.id} className={`flex items-center gap-4 p-4 rounded-xl border transition-all ${isUser ? 'bg-[rgba(232,184,75,0.06)] border-[var(--color-accent)]' : 'border-[var(--color-border)] bg-[var(--color-surface2)]/30'}`}>
-                        <div className="w-8 text-center font-bold text-[var(--color-muted)]">{idx + 1}</div>
-                        <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-[var(--color-bg)] shrink-0" style={{ backgroundColor: tier.color }}>
-                          {lb.name.charAt(0)}
+                {/* 2D Glassmorphism Overlay (HUD) */}
+                <div className="absolute inset-0 z-10 pointer-events-none p-4 lg:p-8 flex flex-col justify-between">
+                  {/* Top Row: Mission Status */}
+                  <div className="flex justify-between items-start">
+                    <div className="glass p-5 rounded-2xl border-l-[4px] border-l-[var(--color-accent)] animate-fade-in-up bg-black/20">
+                      <h4 className="text-[10px] font-bold text-[var(--color-accent)] uppercase tracking-widest mb-1 flex items-center gap-2">
+                         <Target size={12} /> Current Mission
+                      </h4>
+                      <div className="text-xl font-bold font-[Orbitron] tracking-wider mb-1">KNOWLEDGE UNIVERSE</div>
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 h-1.5 w-32 bg-white/10 rounded-full overflow-hidden">
+                          <motion.div 
+                            initial={{ width: 0 }}
+                            animate={{ width: `${Math.min(userXP / 5, 100)}%` }}
+                            className="h-full bg-gradient-to-r from-[var(--color-accent)] to-[var(--color-orange)]"
+                          />
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-sm font-bold text-[var(--color-text)]">{lb.name}</span>
-                            <span>{tier.icon}</span>
-                          </div>
-                          <div className="text-[10px] text-[var(--color-muted)]">{lb.track}</div>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-sm font-bold text-[var(--color-accent)]">{lb.xp} XP</div>
-                          <div className="text-[10px] text-[var(--color-red)]">🔥 {lb.streak}</div>
-                        </div>
+                        <span className="text-[10px] font-bold text-[var(--color-muted)] uppercase tracking-tighter">Sync: {Math.min(Math.floor(userXP/5), 100)}%</span>
                       </div>
-                    )
-                  })}
+                    </div>
+
+                    <div className="flex flex-col items-end gap-3 animate-fade-in-right">
+                       <button 
+                        onClick={() => setIsBotOpen(!isBotOpen)}
+                        className="pointer-events-auto p-3 rounded-full bg-[var(--color-accent)] text-[var(--color-bg)] shadow-[0_0_30px_rgba(232,184,75,0.4)] hover:scale-110 transition-transform active:scale-95"
+                       >
+                         <Bot size={24} />
+                       </button>
+                    </div>
+                  </div>
+
+                  {/* Bottom Row: Quest Log */}
+                  <div className="max-w-xs animate-fade-in-up">
+                     <div className="flex items-center gap-2 mb-3 px-2">
+                       <div className="w-2 h-2 rounded-full bg-[var(--color-accent)] animate-pulse" />
+                       <span className="text-[10px] font-bold text-white uppercase tracking-[0.2em]">Orbital Quests</span>
+                       <span className="ml-auto text-[10px] font-medium text-[var(--color-muted)]">
+                         {todayTasks.filter(t=>t.completed).length}/{todayTasks.length} Active
+                       </span>
+                     </div>
+                     
+                     <div className="space-y-3 max-h-[35vh] overflow-y-auto pr-2 scrollbar-hide pointer-events-auto">
+                       {todayTasks.length === 0 ? (
+                          <div className="p-6 text-center text-xs text-[var(--color-muted)] border border-dashed border-white/10 rounded-2xl bg-white/5">No celestial events scheduled for today.</div>
+                       ) : (
+                         todayTasks.map((task) => (
+                           <div key={task.id} 
+                             onClick={() => navigate(`/module?topic=${encodeURIComponent(task.topic)}&subject=${encodeURIComponent(task.subject)}`)}
+                             className="glass p-4 rounded-2xl border border-white/5 hover:border-[var(--color-accent)]/50 transition-all cursor-pointer group/task bg-[var(--color-surface2)]/40 hover:bg-[var(--color-surface2)]/60"
+                           >
+                              <div className="flex items-center gap-3">
+                                <div className={`w-8 h-8 rounded-xl flex items-center justify-center border transition-colors ${task.completed ? 'bg-[var(--color-green)]/10 border-[var(--color-green)]/30 text-[var(--color-green)]' : 'bg-white/5 border-white/10 text-[var(--color-muted)] group-hover/task:border-[var(--color-accent)]/30'}`}>
+                                  {task.completed ? <CheckCircle2 size={16} /> : <Circle size={14} />}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="text-[10px] font-bold uppercase tracking-tight" style={{ color: (subjectColors[task.subject] || subjectColors.default).text }}>{task.subject}</div>
+                                  <div className="text-xs font-semibold truncate group-hover/task:text-[var(--color-accent)] transition-colors">{task.topic}</div>
+                                </div>
+                                <ArrowRight size={14} className="text-white/20 group-hover/task:text-[var(--color-accent)] transition-all group-hover/task:translate-x-1" />
+                              </div>
+                           </div>
+                         ))
+                       )}
+                     </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-          )}
+              </motion.div>
+            )}
+
+            {activeTab === 'constellation' && (
+              <motion.div 
+                key="constellation-tab"
+                initial={{ opacity: 0, scale: 0.98 }} 
+                animate={{ opacity: 1, scale: 1 }} 
+                exit={{ opacity: 0, scale: 0.98 }}
+                className="relative h-[80vh] w-full mt-2 rounded-3xl overflow-hidden border border-[var(--color-border)] shadow-[0_0_60px_rgba(0,0,0,0.5)] bg-black/40"
+              >
+                <Starmap
+                  topics={allTopics}
+                  onNodeClick={(subject, topic) => navigate(`/module?topic=${encodeURIComponent(topic)}&subject=${encodeURIComponent(subject)}`)}
+                />
+                <div className="absolute inset-0 z-10 pointer-events-none p-8 flex flex-col justify-end">
+                    <div className="glass p-4 rounded-2xl text-center self-center animate-fade-in-up border border-white/10 bg-black/60 backdrop-blur-xl">
+                       <p className="text-[var(--color-accent)] font-mono text-[10px] uppercase tracking-[0.3em] font-bold"><Target size={14} className="inline mr-2" /> Drag to explore • Click star to study</p>
+                    </div>
+                </div>
+              </motion.div>
+            )}
+
+            {activeTab === 'calendar' && (
+              <motion.div 
+                key="calendar-tab"
+                initial={{ opacity: 0, y: 20 }} 
+                animate={{ opacity: 1, y: 0 }} 
+                exit={{ opacity: 0, y: 20 }}
+              >
+                <CalendarView
+                    schedule={schedule}
+                    selectedDate={selectedDate}
+                    setSelectedDate={setSelectedDate}
+                    calendarMonth={calendarMonth}
+                    setCalendarMonth={setCalendarMonth}
+                    calendarDays={calendarDays}
+                    getDateStr={getDateStr}
+                />
+              </motion.div>
+            )}
+
+            {activeTab === 'leaderboard' && (
+              <motion.div 
+                key="leaderboard-tab"
+                initial={{ opacity: 0, y: 20 }} 
+                animate={{ opacity: 1, y: 0 }} 
+                exit={{ opacity: 0, y: 20 }}
+                className="space-y-6"
+              >
+                <div className="surface-card p-8 rounded-3xl">
+                  <h2 className="text-2xl font-bold font-[Orbitron] flex items-center gap-3 mb-8">
+                    <Trophy className="text-[var(--color-accent)]" size={28} /> GLOBAL RANKINGS
+                  </h2>
+                  <div className="space-y-4">
+                    {leaderboard.map((lb, idx) => {
+                      const tier = getTier(lb.xp)
+                      const isUser = lb.id === 'current-user'
+                      return (
+                        <div key={lb.id} className={`flex items-center gap-4 p-5 rounded-2xl border transition-all ${isUser ? 'bg-[rgba(232,184,75,0.08)] border-[var(--color-accent)] shadow-[0_0_20px_rgba(232,184,75,0.1)]' : 'border-[var(--color-border)] bg-[var(--color-surface2)]/30 hover:border-white/20'}`}>
+                          <div className="w-8 text-center font-bold text-[var(--color-muted)] text-lg">{idx + 1}</div>
+                          <div className="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold text-[var(--color-bg)] shrink-0 shadow-lg" style={{ backgroundColor: tier.color }}>
+                            {lb.name.charAt(0)}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="text-base font-bold text-[var(--color-text)]">{lb.name}</span>
+                              <span className="text-lg">{tier.icon}</span>
+                            </div>
+                            <div className="text-[10px] text-[var(--color-muted)] font-bold uppercase tracking-widest">{lb.track}</div>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-lg font-bold text-[var(--color-accent)]">{lb.xp} XP</div>
+                            <div className="text-xs font-bold text-[var(--color-red)] flex items-center justify-end gap-1">
+                              <Flame size={12} /> {lb.streak}
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <RevisionAlerts />
         </main>
       </div>
+
+      <PlanetBotHUD 
+        isOpen={isBotOpen} 
+        onClose={() => setIsBotOpen(false)} 
+        userName={user?.name} 
+      />
     </div>
     </>
   )

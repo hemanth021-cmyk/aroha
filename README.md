@@ -1,73 +1,64 @@
-# React + TypeScript + Vite
+# 🌌 Aroha — 3D Cosmic Edition
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Welcome to **Aroha**, a next-generation educational dashboard that transforms study planning into a cinematic, 3D exploration of the "Knowledge Universe."
 
-Currently, two official plugins are available:
+![Aroha 3D Dashboard](https://hemanth021-cmyk.github.io/aroha/assets/aroha_preview.png)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## 🚀 Key Features
 
-## React Compiler
+### 1. The Knowledge Universe (Dashboard)
+- **Procedural 3D Core**: A central planet representing your study goal.
+- **Orbital Quests**: Daily tasks rendered as interactive satellites orbiting the core.
+- **Glassmorphism HUD**: A floating 2D UI layer providing real-time stats (Streak, XP, Sync).
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### 2. The Syllabus Starmap (Constellation)
+- **3D Spatial Learning**: Your entire syllabus is mapped as a galaxy of interactive stars.
+- **High-Contrast Design**: Featuring a massive central Sun and bright white stars for a premium feel.
+- **Raycasting Interaction**: Click any star to instantly launch its study module.
 
-## Expanding the ESLint configuration
+### 3. VARA AI (Planet Bot)
+- **Interactive Assistant**: The central planet is a living AI guide named **VARA**.
+- **Visual Pulse**: The planet's core pulses when VARA is thinking or active.
+- **Integrated HUD**: A seamless chat interface for contextual guidance.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### 4. Quiz-Gated XP System
+- **Mastery Validation**: All XP and Streaks are locked behind a knowledge validation engine.
+- **Interactive Quizzes**: Complete modules then pass a 3-question quiz (70%+ score) to progress.
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+---
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+## 🛠 Tech Stack
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+- **Framework**: [React 19](https://react.dev/)
+- **3D Engine**: [Three.js](https://threejs.org/) + [@react-three/fiber](https://r3f.docs.pmnd.rs/)
+- **Animation**: [GSAP (GreenSock)](https://greensock.com/) + [Framer Motion](https://www.framer.com/motion/)
+- **Bundler**: [Vite 8](https://vitejs.dev/)
+- **Styling**: [Tailwind CSS 4](https://tailwindcss.com/)
+- **Icons**: [Lucide React](https://lucide.dev/)
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+---
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## 🔗 Live Access
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+- **Official Platform**: [https://hemanth021-cmyk.github.io/aroha/](https://hemanth021-cmyk.github.io/aroha/)
+- **Alternative (Cleaner URL)**: [https://aroha.loca.lt](https://aroha.loca.lt)
+
+---
+
+## 💎 Credits & References
+
+### Project Vision
+- **Concept & Design**: Developed for the **Aroha Platform** by Hemanth & Team.
+
+### Technological Partners
+- **AI Architect**: [Antigravity AI](https://deepmind.google/) (Google DeepMind)
+- **Interactive Logic**: [Claude 3.7 Sonnet](https://anthropic.com/)
+
+### Core References
+- [React Three Drei](https://github.com/pmndrs/drei) - For helper components in 3D space.
+- [Vite Documentation](https://vitejs.dev/guide/) - For high-performance build pipelines.
+- [GitHub Pages Deployment Guide](https://pages.github.com/) - For static hosting infrastructure.
+
+---
+
+*This project was meticulously crafted to push the boundaries of modern educational UX.*

@@ -1,25 +1,50 @@
 import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls, Stars, Float } from "@react-three/drei";
-import { Suspense, useRef } from "react";
+import { Suspense, useRef, useState, useEffect } from "react";
 import * as THREE from 'three';
 
 // Sub-component for the main Planet
-function CorePlanet() {
+function CorePlanet({ onActivate, isActive }: { onActivate: () => void, isActive: boolean }) {
   const planetRef = useRef<THREE.Mesh>(null);
+  const [hovered, setHovered] = useState(false);
+
+  useEffect(() => {
+    document.body.style.cursor = hovered ? 'pointer' : 'auto';
+  }, [hovered]);
 
   useFrame((state, delta) => {
     if (planetRef.current) {
       planetRef.current.rotation.y += delta * 0.05;
+      
+      // Pulsing effect if active or hovered
+      const material = planetRef.current.material as THREE.MeshStandardMaterial;
+      if (isActive) {
+        material.emissiveIntensity = 0.5 + Math.sin(state.clock.elapsedTime * 4) * 0.3;
+      } else if (hovered) {
+        material.emissiveIntensity = 0.6;
+      } else {
+        material.emissiveIntensity = 0.4;
+      }
     }
   });
 
   return (
     <Float speed={1.5} rotationIntensity={0.2} floatIntensity={0.5}>
-      <mesh ref={planetRef} receiveShadow castShadow>
+      <mesh 
+        ref={planetRef} 
+        receiveShadow 
+        castShadow
+        onClick={(e) => {
+          e.stopPropagation();
+          onActivate();
+        }}
+        onPointerOver={() => setHovered(true)}
+        onPointerOut={() => setHovered(false)}
+      >
         <sphereGeometry args={[2.5, 64, 64]} />
         <meshStandardMaterial 
-          color="#1a1a2e" 
-          emissive="#2D1B4E"
+          color={isActive ? "#3a2a5e" : "#1a1a2e"} 
+          emissive={isActive ? "#FFC737" : "#2D1B4E"}
           emissiveIntensity={0.4}
           roughness={0.7}
           metalness={0.3}
@@ -30,9 +55,9 @@ function CorePlanet() {
         <mesh scale={[1.05, 1.05, 1.05]}>
           <sphereGeometry args={[2.5, 32, 32]} />
           <meshBasicMaterial 
-            color="#FFC737" 
+            color={isActive ? "#FFC737" : "#FFC737"} 
             transparent 
-            opacity={0.05} 
+            opacity={isActive ? 0.15 : 0.05} 
             side={THREE.BackSide} 
           />
         </mesh>
@@ -40,6 +65,7 @@ function CorePlanet() {
     </Float>
   );
 }
+
 
 // Sub-component for orbiting task satellites
 function OrbitingSatellite({ radius, speed, color, offset }: { radius: number, speed: number, color: string, offset: number }) {
@@ -76,7 +102,7 @@ function OrbitingSatellite({ radius, speed, color, offset }: { radius: number, s
   );
 }
 
-export default function Universe() {
+export default function Universe({ onPlanetClick, isBotActive }: { onPlanetClick: () => void, isBotActive: boolean }) {
   return (
     <div className="w-full h-full absolute inset-0 z-0 bg-transparent">
       <Canvas 
@@ -101,7 +127,7 @@ export default function Universe() {
           <pointLight position={[-5, -5, -5]} intensity={1} color="#EB3322" />
 
           {/* Central Planet */}
-          <CorePlanet />
+          <CorePlanet onActivate={onPlanetClick} isActive={isBotActive} />
 
           {/* Quest Satellites */}
           <OrbitingSatellite radius={4} speed={0.5} color="#FFC737" offset={0} />

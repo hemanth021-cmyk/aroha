@@ -32,10 +32,10 @@ function StarNode({ node, onClick }: { node: StarmapNode, onClick: () => void })
   const meshRef = useRef<THREE.Mesh>(null);
   const [hovered, setHovered] = useState(false);
 
-  // Matching the constellation planets to the star/sun color (Solar Yellow)
-  const starColor = node.completed ? "#FFC737" : "#FFD56B";
-  const emissiveColor = node.completed ? "#FFC737" : "#FFC737"; 
-  const emissiveIntensity = hovered ? 2.5 : (node.completed ? 1.5 : 0.4); // Dimmer glow for unexplored
+  // Bright White for stars as requested
+  const starColor = "#FFFFFF";
+  const emissiveColor = "#FFFFFF"; 
+  const emissiveIntensity = hovered ? 3.0 : (node.completed ? 1.5 : 0.6); // Increased intensity
 
   useFrame((state, delta) => {
     if (meshRef.current) {
@@ -177,11 +177,18 @@ export default function Starmap({ topics, onNodeClick }: StarmapProps) {
             <StarNode key={node.id} node={node} onClick={() => onNodeClick(node.subject, node.topic)} />
           ))}
 
-          {/* Galaxy Center Glow */}
-          <mesh position={[0, 0, 0]}>
-            <sphereGeometry args={[1, 32, 32]} />
-            <meshBasicMaterial color="#FFC737" transparent opacity={0.1} />
-          </mesh>
+          {/* Galaxy Center Glow (The Sun) */}
+          <group position={[0, 0, 0]}>
+            <mesh>
+              <sphereGeometry args={[5, 32, 32]} />
+              <meshBasicMaterial color="#FFC737" transparent opacity={0.15} />
+            </mesh>
+            <mesh>
+              <sphereGeometry args={[2, 32, 32]} />
+              <meshBasicMaterial color="#FFC737" transparent opacity={0.4} />
+            </mesh>
+            <pointLight intensity={10} color="#FFC737" decay={2} />
+          </group>
 
           {/* Controls */}
           <OrbitControls 
